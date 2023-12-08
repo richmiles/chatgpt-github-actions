@@ -38,7 +38,7 @@ def files():
                 # Getting the file name and content
             filename = file.filename
             try:                
-                content = repo.get_contents(filename, ref=commit.sha).decoded_content
+                content = repo.get_contents(filename, ref=commit.sha).decoded_content.decode('utf-8')
 
                 # Updated code to use ChatGPT completions
                 response = openai.chat.completions.create(
@@ -66,7 +66,7 @@ def files():
             except Exception as e:
                 error_message = str(e)
                 print(error_message)
-                pull_request.create_issue_comment(f"ChatGPT was unable to process the response about {file_name}")
+                pull_request.create_issue_comment(f"ChatGPT was unable to process the response about {filename}")
 
 
 def patch():
