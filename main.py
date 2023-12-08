@@ -35,33 +35,38 @@ def files():
         # Getting the modified files in the commit
         files = commit.files
         for file in files:
-            # Getting the file name and content
+                # Getting the file name and content
             filename = file.filename
-            content = repo.get_contents(filename, ref=commit.sha).decoded_content
+            try:                
+                content = repo.get_contents(filename, ref=commit.sha).decoded_content
 
-            # Updated code to use ChatGPT completions
-            response = openai.chat.completions.create(
-                model=args.openai_engine,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Please review the following code for clarity, efficiency, and adherence to best practices. Highlight any areas for improvement, suggest optimizations, and note potential bugs or security vulnerabilities. Also, consider the maintainability and scalability of the code."
-                    },
-                    {
-                        "role": "user",
-                        "content": content  # Your code here
-                    }
-                ],
-                temperature=float(args.openai_temperature),
-                max_tokens=int(args.openai_max_tokens)
-            )
-            
-            # Accessing the completion text from the response
-            completion_text = response['choices'][0]['message']['content'] if response['choices'] else ''
+                # Updated code to use ChatGPT completions
+                response = openai.chat.completions.create(
+                    model=args.openai_engine,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "Please review the following code for clarity, efficiency, and adherence to best practices. Highlight any areas for improvement, suggest optimizations, and note potential bugs or security vulnerabilities. Also, consider the maintainability and scalability of the code."
+                        },
+                        {
+                            "role": "user",
+                            "content": content
+                        }
+                    ],
+                    temperature=float(args.openai_temperature),
+                    max_tokens=int(args.openai_max_tokens)
+                )
+                
+                # Accessing the completion text from the response
+                completion_text = response['choices'][0]['message']['content'] if response['choices'] else ''
 
-            # Adding a comment to the pull request with ChatGPT's response
-            pull_request.create_issue_comment(
-                f"ChatGPT's response about `{file.filename}`:\n {completion_text}")
+                # Adding a comment to the pull request with ChatGPT's response
+                pull_request.create_issue_comment(
+                    f"ChatGPT's response about `{file.filename}`:\n {completion_text}")
+            except Exception as e:
+                error_message = str(e)
+                print(error_message)
+                pull_request.create_issue_comment(f"ChatGPT was unable to process the response about {file_name}")
 
 
 def patch():
@@ -94,7 +99,7 @@ def patch():
                     },
                     {
                         "role": "user",
-                        "content": content  # Your code here
+                        "content": content
                     }
                 ],
                 temperature=float(args.openai_temperature),
