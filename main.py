@@ -40,7 +40,7 @@ def files():
             content = repo.get_contents(filename, ref=commit.sha).decoded_content
 
             # Updated code to use ChatGPT completions
-            response = openai.ChatCompletion.create(
+            response = openai.chat.completions.create(
                 model=args.openai_engine,
                 messages=[
                     {
@@ -85,7 +85,7 @@ def patch():
             print(file_name)
 
             # Updated code to use ChatGPT completions
-            response = openai.ChatCompletion.create(
+            response = openai.chat.completions.create(
                 model=args.openai_engine,
                 messages=[
                     {
