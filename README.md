@@ -43,7 +43,7 @@ jobs:
           openai_engine: "text-davinci-002" #optional
           openai_temperature: 0.5 #optional
           openai_max_tokens: 2048 #optional
-          mode: file # file or patch 
+          mode: files # files or patch 
 ```
 
 In the above workflow, the pull_request event triggers the workflow whenever a pull request is opened or synchronized. The workflow runs on the ubuntu-latest runner and uses the cirolini/chatgpt-github-actions@v1 action.
