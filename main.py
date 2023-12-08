@@ -39,17 +39,29 @@ def files():
             filename = file.filename
             content = repo.get_contents(filename, ref=commit.sha).decoded_content
 
-            # Sending the code to ChatGPT
-            response = openai.Completion.create(
-                engine=args.openai_engine,
-                prompt=(f"Please review the following code for clarity, efficiency, and adherence to best practices. Highlight any areas for improvement, suggest optimizations, and note potential bugs or security vulnerabilities. Also, consider the maintainability and scalability of the code.:\n ### Code \n```{content}```"),
+            # Updated code to use ChatGPT completions
+            response = openai.ChatCompletion.create(
+                model=args.openai_engine,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Please review the following code for clarity, efficiency, and adherence to best practices. Highlight any areas for improvement, suggest optimizations, and note potential bugs or security vulnerabilities. Also, consider the maintainability and scalability of the code."
+                    },
+                    {
+                        "role": "user",
+                        "content": content  # Your code here
+                    }
+                ],
                 temperature=float(args.openai_temperature),
                 max_tokens=int(args.openai_max_tokens)
             )
+            
+            # Accessing the completion text from the response
+            completion_text = response['choices'][0]['message']['content'] if response['choices'] else ''
 
             # Adding a comment to the pull request with ChatGPT's response
             pull_request.create_issue_comment(
-                f"ChatGPT's response about `{file.filename}`:\n {response['choices'][0]['text']}")
+                f"ChatGPT's response about `{file.filename}`:\n {completion_text}")
 
 
 def patch():
