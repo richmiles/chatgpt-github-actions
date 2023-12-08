@@ -72,17 +72,28 @@ def patch():
             file_name = diff_text.split("b/")[1].splitlines()[0]
             print(file_name)
 
-            response = openai.Completion.create(
-                engine=args.openai_engine,
-                prompt=(f"Summarize what was done in this diff:\n```{diff_text}```"),
+            # Updated code to use ChatGPT completions
+            response = openai.ChatCompletion.create(
+                model=args.openai_engine,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Please review the following code for clarity, efficiency, and adherence to best practices. Highlight any areas for improvement, suggest optimizations, and note potential bugs or security vulnerabilities. Also, consider the maintainability and scalability of the code."
+                    },
+                    {
+                        "role": "user",
+                        "content": content  # Your code here
+                    }
+                ],
                 temperature=float(args.openai_temperature),
                 max_tokens=int(args.openai_max_tokens)
             )
+            
+            # Accessing the completion text from the response
+            completion_text = response['choices'][0]['message']['content'] if response['choices'] else ''
+            
             print(response)
-            print(response['choices'][0]['text'])
-
-            pull_request.create_issue_comment(
-                f"ChatGPT's response about ``{file_name}``:\n {response['choices'][0]['text']}")
+            print(completion_text)
         except Exception as e:
             error_message = str(e)
             print(error_message)
