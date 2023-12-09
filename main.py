@@ -196,7 +196,7 @@ def get_code_review_from_openai(content: str, include_tokens_in_output: bool) ->
     except Exception as e:
         error_message = str(e)
         # This is for other unexpected errors
-        error_details = f"### Details:\n`{error_message.replace('`', '\'')}`### Context:\n`{content.replace('`', '\'')}`### Messages:\n`{str(messages).replace('`', '\'')}`"
+        error_details = f"### Details:\n```{error_message.replace('`', '\'')}```\n### Context:\n```{content.replace('`', '\'')}```\n### Messages:\n`{str(messages).replace('`', '\'')}```"
         raise Exception(
             f"ChatGPT encountered an issue processing your request.\n\n{error_details}"
         )
