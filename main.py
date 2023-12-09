@@ -3,6 +3,8 @@
 ## Import statements
 import argparse
 import string
+from xml.etree.ElementInclude import include
+from xmlrpc.client import boolean
 import openai
 import os
 import requests
@@ -31,6 +33,15 @@ parser.add_argument(
 parser.add_argument(
     "--mode", default="files", help="PR interpretation form. Options: files, patch"
 )
+parser.add_argument(
+    "--included_file_extensions", default="", help="A | delimited list of file extensions to include. e.g. cs|js|..."
+)
+parser.add_argument(
+    "--excluded_file_extensions", default="", help="A | delimited list of file extensions to exclude. e.g. cs|js|..."
+)
+parser.add_argument(
+    "--include_tokens_in_output", default=False, help="True will include token cost in comment."
+)
 args = parser.parse_args()
 
 ## Authenticating with the OpenAI API
@@ -40,7 +51,10 @@ openai.api_key = args.openai_api_key
 g = Github(args.github_token)
 
 
-def files():
+def files(included_file_extensions: list[str], 
+          excluded_file_extensions: list[str], 
+          include_tokens_in_output: bool) -> None:
+    
     repo = g.get_repo(os.getenv("GITHUB_REPOSITORY"))
     pull_request = repo.get_pull(int(args.github_pr_id))
 
@@ -51,17 +65,23 @@ def files():
         files = commit.files
         for file in files:
             # Getting the file name and content
-            filename = file.filename
+            file_name = file.filename
+            if len(included_file_extensions) > 0:
+                if file_name.split(".")[-1] not in included_file_extensions:
+                    continue
+            if len(excluded_file_extensions) > 0:
+                if file_name.split(".")[-1] in excluded_file_extensions:
+                    continue
             try:
                 content = repo.get_contents(
-                    filename, ref=commit.sha
+                    file_name, ref=commit.sha
                 ).decoded_content.decode("utf-8")
 
                 review = get_code_review_from_openai(content)
 
                 # Adding a comment to the pull request with ChatGPT's response
                 pull_request.create_issue_comment(
-                    f"ChatGPT's response about `{file.filename}`:\n {review}"
+                    f"ChatGPT's response about `{file.file_name}`:\n {review}"
                 )
             except Exception as e:
                 error_message = str(e)
@@ -70,7 +90,9 @@ def files():
                 raise e
 
 
-def patch():
+def patch(included_file_extensions: list[str], 
+          excluded_file_extensions: list[str], 
+          include_tokens_in_output: bool) -> None:
     repo = g.get_repo(os.getenv("GITHUB_REPOSITORY"))
     pull_request = repo.get_pull(int(args.github_pr_id))
 
@@ -88,7 +110,12 @@ def patch():
 
         try:
             file_name = diff_text.split("b/")[1].splitlines()[0]
-            print(file_name)
+            if len(included_file_extensions) > 0:
+                if file_name.split(".")[-1] not in included_file_extensions:
+                    continue
+            if len(excluded_file_extensions) > 0:
+                if file_name.split(".")[-1] in excluded_file_extensions:
+                    continue
 
             review = get_code_review_from_openai(diff_text)
             # Adding a comment to the pull request with ChatGPT's response
@@ -119,7 +146,7 @@ def get_content_patch() -> str:
     return response.text
 
 
-def get_code_review_from_openai(content: str) -> str:
+def get_code_review_from_openai(content: str, include_tokens_in_output: bool) -> str:
     try:
         messages = [
             {
@@ -140,6 +167,10 @@ def get_code_review_from_openai(content: str) -> str:
         completion_text = (
             response.choices[0].message.content if response.choices else ""
         )
+        if(include_tokens_in_output):
+            completion_text += f"\n\nCompletion Tokens: {response.usage.completion_tokens}" if response.usage else ""
+            completion_text += f"\Prompt Tokens: {response.usage.prompt_tokens}" if response.usage else ""
+            
         return completion_text
     except Exception as e:
         error_message = str(e)
@@ -147,9 +178,14 @@ def get_code_review_from_openai(content: str) -> str:
             f"ChatGPT was unable to process the response about {content}\n\n{error_message}\n\n{messages}\n\n{response}"
         )
 
+# if args.include_tokens_in_output != "" split on | and create an array of the tokens
+included_file_extensions = args.included_file_extensions.split("|") if args.included_file_extensions != "" else []
+excluded_file_extensions = args.excluded_file_extensions.split("|") if args.excluded_file_extensions != "" else []
+include_tokens_in_output = args.include_tokens_in_output
+
 
 if args.mode == "files":
-    files()
+    files(included_file_extensions, excluded_file_extensions, include_tokens_in_output)
 
 if args.mode == "patch":
-    patch()
+    patch(included_file_extensions, excluded_file_extensions, include_tokens_in_output)

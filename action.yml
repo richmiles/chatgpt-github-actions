@@ -2,22 +2,22 @@
 name: 'Code Review with ChatGPT'
 description: 'Automating code review using ChatGPT with Github Actions integration on PRs for code explanations.'
 inputs:
-  openai_api_key:  # id of input
+  openai_api_key:  # Openai API Key is typically recovered from a secret
     description: 'OpenAI API Key'
     required: true
     default: ''
-  github_token:  # id of input
+  github_token:  # Github token is passed by Github Actions
     description: 'Github API Key'
     required: true
     default: ''
-  github_pr_id:  # id of input
+  github_pr_id:  # id of PR to review
     description: 'Github PR ID'
     required: true
     default: ''
-  openai_engine:  # id of input
-    description: 'GPT-3 models can understand and generate natural language. We offer four main models with different levels of power suitable for different tasks. Davinci is the most capable model, and Ada is the fastest.'
+  openai_engine:  # The engine to use for the completion.
+    description: 'Options are gpt-4, gpt-4 turbo, gpt-3.5-turbo'
     required: false
-    default: 'text-davinci-002'
+    default: 'gpt-3.5-turbo'
   openai_temperature:  # id of input
     description: 'What sampling temperature to use. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer.'
     required: false
@@ -30,6 +30,18 @@ inputs:
     description: 'How to capture PR changes. Options: files, patch'
     required: false
     default: 'files'
+  included_file_extensions:  # | delimited list of file extensions to include
+    description: 'A pipe delimited list of file extensions to include.'
+    required: false
+    default: ''
+  excluded_file_extensions:  # | delimited list of file extensions to exclude
+    description: 'A pipe delimited list of file extensions to exclude.'
+    required: false
+    default: ''
+  include_tokens_in_output:  # Whether to include the input tokens in the output when generating sequences
+    description: 'Whether to include the input tokens in the output when generating sequences'
+    required: false
+    default: 'false'
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -41,3 +53,6 @@ runs:
     - ${{ inputs.openai_temperature }}
     - ${{ inputs.openai_max_tokens }}
     - ${{ inputs.mode }}
+    - ${{ inputs.included_file_extensions }}
+    - ${{ inputs.excluded_file_extensions }}
+    - ${{ inputs.include_tokens_in_output }}
