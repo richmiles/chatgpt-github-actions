@@ -169,9 +169,8 @@ def get_code_review_from_openai(content: str, include_tokens_in_output: bool) ->
     except Exception as e:
         error_message = str(e)
         error_details = f"Details: `{error_message}`\nContext: `{content}`\nMessages: `{messages}`"
-        response_info = f"Response: `{response}`" if response else "Response was not received or is empty."
         raise Exception(
-            f"ChatGPT encountered an issue processing your request.\n\n{error_details}\n\n{response_info}"
+            f"ChatGPT encountered an issue processing your request.\n\n{error_details}"
         )
     
 def determine_if_file_is_include(file_name: str, included_file_extensions: list[str], excluded_file_extensions: list[str]) -> bool:
