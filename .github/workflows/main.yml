@@ -19,4 +19,4 @@ jobs:
           mode: "files" # Optional: specify how to capture PR changes. Options: files, patch. Default is files
           included_file_extensions: "c|cpp|cs|go|h|java|js|jsx|php|py|rb|rs|sh|ts|tsx"
           # excluded_file_extensions: "md|txt|yml"
-          include_tokens_in_output: "true"
+          include_tokens_in_output: true # Optional: specify whether to include the input tokens in the output when generating sequences. Default is false
