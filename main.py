@@ -186,11 +186,13 @@ def determine_if_file_is_include(file_name: str, included_file_extensions: list[
             return False
     return True
 
+def parse_bool(value):
+    return value.lower() in ['true', '1', 't', 'y', 'yes']
+
 # if args.include_tokens_in_output != "" split on | and create an array of the tokens
 included_file_extensions = args.included_file_extensions.split("|") if args.included_file_extensions != "" else []
 excluded_file_extensions = args.excluded_file_extensions.split("|") if args.excluded_file_extensions != "" else []
-include_tokens_in_output = args.include_tokens_in_output
-
+include_tokens_in_output = parse_bool(args.include_tokens_in_output)
 
 if args.mode == "files":
     files(included_file_extensions, excluded_file_extensions, include_tokens_in_output)
