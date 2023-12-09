@@ -78,7 +78,7 @@ def files(included_file_extensions: list[str],
 
                 # Adding a comment to the pull request with ChatGPT's response
                 pull_request.create_issue_comment(
-                    f"ChatGPT's response about `{file.file_name}`:\n {review}"
+                    f"ChatGPT's response about `{file_name}`:\n {review}"
                 )
             except Exception as e:
                 error_message = str(e)
