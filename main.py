@@ -198,7 +198,7 @@ def get_code_review_from_openai(content: str, include_tokens_in_output: bool) ->
         if "BadRequestError" in error_message or "400" in error_message:
             raise Exception(f"{error_message}")
         else:
-            error_details = f"## Details:\n\n{error_message}`\n\nContext: \n\n`{content}`\n\nMessages: \n\n`{messages}`"
+            error_details = f"## Details:\n\n`{error_message}`\n\nContext:\n\n`{content}`\n\nMessages:\n\n`{messages}`"
         raise Exception(
             f"ChatGPT encountered an issue processing your request.\n\n{error_details}"
         )
