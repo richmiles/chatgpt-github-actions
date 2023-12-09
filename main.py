@@ -66,18 +66,15 @@ def files(included_file_extensions: list[str],
         for file in files:
             # Getting the file name and content
             file_name = file.filename
-            if len(included_file_extensions) > 0:
-                if file_name.split(".")[-1] not in included_file_extensions:
-                    continue
-            if len(excluded_file_extensions) > 0:
-                if file_name.split(".")[-1] in excluded_file_extensions:
-                    continue
+            if determine_if_file_is_include(file_name, included_file_extensions, excluded_file_extensions) == False:
+                continue
+            
             try:
                 content = repo.get_contents(
                     file_name, ref=commit.sha
                 ).decoded_content.decode("utf-8")
 
-                review = get_code_review_from_openai(content)
+                review = get_code_review_from_openai(content, include_tokens_in_output)
 
                 # Adding a comment to the pull request with ChatGPT's response
                 pull_request.create_issue_comment(
@@ -110,14 +107,11 @@ def patch(included_file_extensions: list[str],
 
         try:
             file_name = diff_text.split("b/")[1].splitlines()[0]
-            if len(included_file_extensions) > 0:
-                if file_name.split(".")[-1] not in included_file_extensions:
-                    continue
-            if len(excluded_file_extensions) > 0:
-                if file_name.split(".")[-1] in excluded_file_extensions:
-                    continue
 
-            review = get_code_review_from_openai(diff_text)
+            if determine_if_file_is_include(file_name, included_file_extensions, excluded_file_extensions) == False:
+                continue
+
+            review = get_code_review_from_openai(diff_text, include_tokens_in_output)
             # Adding a comment to the pull request with ChatGPT's response
             pull_request.create_issue_comment(
                 f"ChatGPT's response about `{file_name}`:\n {review}"
@@ -177,6 +171,19 @@ def get_code_review_from_openai(content: str, include_tokens_in_output: bool) ->
         raise Exception(
             f"ChatGPT was unable to process the response about {content}\n\n{error_message}\n\n{messages}\n\n{response}"
         )
+    
+def determine_if_file_is_include(file_name: str, included_file_extensions: list[str], excluded_file_extensions: list[str]) -> bool:
+    if len(included_file_extensions) > 0:
+        if file_name.index(".") == -1 and "" not in included_file_extensions:
+            return False
+        if file_name.split(".")[-1] not in included_file_extensions:
+            return False
+    if len(excluded_file_extensions) > 0:
+        if file_name.index(".") == -1 and "" in excluded_file_extensions:
+            return False
+        if file_name.split(".")[-1] in excluded_file_extensions:
+            return False
+    return True
 
 # if args.include_tokens_in_output != "" split on | and create an array of the tokens
 included_file_extensions = args.included_file_extensions.split("|") if args.included_file_extensions != "" else []
