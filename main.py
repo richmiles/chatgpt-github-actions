@@ -162,15 +162,14 @@ def get_code_review_from_openai(content: str, include_tokens_in_output: bool) ->
             response.choices[0].message.content if response.choices else ""
         )
         if(include_tokens_in_output):
-            print(response)
-            completion_text += f"\n\nCompletion Tokens: {response.usage.completion_tokens}" if response.usage else ""
-            completion_text += f"\nPrompt Tokens: {response.usage.prompt_tokens}" if response.usage else ""
+            completion_text += f"\n\n<small>Completion Tokens: **{response.usage.completion_tokens}**</small>" if response.usage else ""
+            completion_text += f"\t<small>Prompt Tokens: **{response.usage.prompt_tokens}**</small>" if response.usage else ""
             
         return completion_text
     except Exception as e:
         error_message = str(e)
         raise Exception(
-            f"ChatGPT was unable to process the response about {content}\n\n{error_message}\n\n{messages}\n\n{response}"
+            f"ChatGPT was unable to process the response about `{content}`\n\n{error_message}\n\n`{messages}`\n\n`{response}`"
         )
     
 def determine_if_file_is_include(file_name: str, included_file_extensions: list[str], excluded_file_extensions: list[str]) -> bool:
@@ -192,9 +191,7 @@ def parse_bool(value):
 # if args.include_tokens_in_output != "" split on | and create an array of the tokens
 included_file_extensions = args.included_file_extensions.split("|") if args.included_file_extensions != "" else []
 excluded_file_extensions = args.excluded_file_extensions.split("|") if args.excluded_file_extensions != "" else []
-print("Include Tokens in Output: " + args.include_tokens_in_output)
 include_tokens_in_output = parse_bool(args.include_tokens_in_output)
-print("Include Tokens in Output: " + str(include_tokens_in_output))
 
 if args.mode == "files":
     files(included_file_extensions, excluded_file_extensions, include_tokens_in_output)
