@@ -138,7 +138,7 @@ def get_code_review_from_openai(content: str) -> str:
 
         # Accessing the completion text from the response
         completion_text = (
-            response["choices"][0]["message"]["content"] if response["choices"] else ""
+            response.choices[0].message.content if response.choices else ""
         )
         return completion_text
     except Exception as e:
