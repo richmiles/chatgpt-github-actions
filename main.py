@@ -17,8 +17,8 @@ parser.add_argument("--github_token", help="Your Github Token")
 parser.add_argument("--github_pr_id", help="Your Github PR ID")
 parser.add_argument(
     "--openai_engine",
-    default="text-davinci-002",
-    help="GPT-3 model to use. Options: text-davinci-002, text-babbage-001, text-curie-001, text-ada-001",
+    default="gpt-3.5-turbo",
+    help="GPT Chat Completions model to use. Options: gpt-4, gpt-4 turbo, gpt-3.5-turbo",
 )
 parser.add_argument(
     "--openai_temperature",
@@ -40,7 +40,7 @@ parser.add_argument(
     "--excluded_file_extensions", default="", help="A | delimited list of file extensions to exclude. e.g. cs|js|..."
 )
 parser.add_argument(
-    "--include_tokens_in_output", default=False, help="True will include token cost in comment."
+    "--include_tokens_in_output", default="false", help="True will include token cost in comment."
 )
 args = parser.parse_args()
 
