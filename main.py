@@ -166,17 +166,10 @@ def get_code_review_from_openai(content: str, include_tokens_in_output: bool) ->
             completion_text += f"\n*Prompt Tokens:* **{response.usage.prompt_tokens}**" if response.usage else ""
             
         return completion_text
-    except openai.error.BadRequestError as e:
-        # Handle specific bad request errors here
-        error_message = str(e)
-        raise Exception(
-            f"BadRequestError occurred: {error_message}"
-        )
     except Exception as e:
         error_message = str(e)
-        error_details = f"Details: `{error_message}`\nContext: `{content}`\nMessages: `{messages}`"
         raise Exception(
-            f"ChatGPT encountered an issue processing your request.\n\n{error_details}"
+            f"ChatGPT encountered an issue processing your request.\n\n{error_message}"
         )
     
 def determine_if_file_is_include(file_name: str, included_file_extensions: list[str], excluded_file_extensions: list[str]) -> bool:
