@@ -34,13 +34,19 @@ parser.add_argument(
     "--mode", default="files", help="PR interpretation form. Options: files, patch"
 )
 parser.add_argument(
-    "--included_file_extensions", default="", help="A | delimited list of file extensions to include. e.g. cs|js|..."
+    "--included_file_extensions",
+    default="",
+    help="A | delimited list of file extensions to include. e.g. cs|js|...",
 )
 parser.add_argument(
-    "--excluded_file_extensions", default="", help="A | delimited list of file extensions to exclude. e.g. cs|js|..."
+    "--excluded_file_extensions",
+    default="",
+    help="A | delimited list of file extensions to exclude. e.g. cs|js|...",
 )
 parser.add_argument(
-    "--include_tokens_in_output", default="false", help="True will include token cost in comment."
+    "--include_tokens_in_output",
+    default="false",
+    help="True will include token cost in comment.",
 )
 args = parser.parse_args()
 
@@ -51,10 +57,11 @@ openai.api_key = args.openai_api_key
 g = Github(args.github_token)
 
 
-def files(included_file_extensions: list[str], 
-          excluded_file_extensions: list[str], 
-          include_tokens_in_output: bool) -> None:
-    
+def files(
+    included_file_extensions: list[str],
+    excluded_file_extensions: list[str],
+    include_tokens_in_output: bool,
+) -> None:
     repo = g.get_repo(os.getenv("GITHUB_REPOSITORY"))
     pull_request = repo.get_pull(int(args.github_pr_id))
 
@@ -66,9 +73,14 @@ def files(included_file_extensions: list[str],
         for file in files:
             # Getting the file name and content
             file_name = file.filename
-            if determine_if_file_is_include(file_name, included_file_extensions, excluded_file_extensions) == False:
+            if (
+                determine_if_file_is_include(
+                    file_name, included_file_extensions, excluded_file_extensions
+                )
+                == False
+            ):
                 continue
-            
+
             try:
                 content = repo.get_contents(
                     file_name, ref=commit.sha
@@ -87,9 +99,11 @@ def files(included_file_extensions: list[str],
                 raise e
 
 
-def patch(included_file_extensions: list[str], 
-          excluded_file_extensions: list[str], 
-          include_tokens_in_output: bool) -> None:
+def patch(
+    included_file_extensions: list[str],
+    excluded_file_extensions: list[str],
+    include_tokens_in_output: bool,
+) -> None:
     repo = g.get_repo(os.getenv("GITHUB_REPOSITORY"))
     pull_request = repo.get_pull(int(args.github_pr_id))
 
@@ -108,7 +122,12 @@ def patch(included_file_extensions: list[str],
         try:
             file_name = diff_text.split("b/")[1].splitlines()[0]
 
-            if determine_if_file_is_include(file_name, included_file_extensions, excluded_file_extensions) == False:
+            if (
+                determine_if_file_is_include(
+                    file_name, included_file_extensions, excluded_file_extensions
+                )
+                == False
+            ):
                 continue
 
             review = get_code_review_from_openai(diff_text, include_tokens_in_output)
@@ -161,25 +180,35 @@ def get_code_review_from_openai(content: str, include_tokens_in_output: bool) ->
         completion_text = (
             response.choices[0].message.content if response.choices else ""
         )
-        if(include_tokens_in_output):
-            completion_text += f"\n\n*Completion Tokens:* **{response.usage.completion_tokens}**" if response.usage else ""
-            completion_text += f"\n*Prompt Tokens:* **{response.usage.prompt_tokens}**" if response.usage else ""
-            
+        if include_tokens_in_output:
+            completion_text += (
+                f"\n\n*Completion Tokens:* **{response.usage.completion_tokens}**"
+                if response.usage
+                else ""
+            )
+            completion_text += (
+                f"\n*Prompt Tokens:* **{response.usage.prompt_tokens}**"
+                if response.usage
+                else ""
+            )
+
         return completion_text
-    except openai.error.BadRequestError as e:
-        # Handle specific bad request errors here
-        error_message = str(e)
-        raise Exception(
-            f"BadRequestError occurred: {error_message}"
-        )
     except Exception as e:
         error_message = str(e)
-        error_details = f"Details: `{error_message}`\nContext: `{content}`\nMessages: `{messages}`"
+        if "BadRequestError" in error_message or "400" in error_message:
+            raise Exception(f"{error_message}")
+        else:
+            error_details = f"## Details:\n\n{error_message}`\n\nContext: \n\n`{content}`\n\nMessages: \n\n`{messages}`"
         raise Exception(
             f"ChatGPT encountered an issue processing your request.\n\n{error_details}"
         )
-    
-def determine_if_file_is_include(file_name: str, included_file_extensions: list[str], excluded_file_extensions: list[str]) -> bool:
+
+
+def determine_if_file_is_include(
+    file_name: str,
+    included_file_extensions: list[str],
+    excluded_file_extensions: list[str],
+) -> bool:
     if len(included_file_extensions) > 0:
         if file_name.index(".") == -1 and "" not in included_file_extensions:
             return False
@@ -192,12 +221,22 @@ def determine_if_file_is_include(file_name: str, included_file_extensions: list[
             return False
     return True
 
+
 def parse_bool(value):
-    return value.lower() in ['true', '1', 't', 'y', 'yes']
+    return value.lower() in ["true", "1", "t", "y", "yes"]
+
 
 # if args.include_tokens_in_output != "" split on | and create an array of the tokens
-included_file_extensions = args.included_file_extensions.split("|") if args.included_file_extensions != "" else []
-excluded_file_extensions = args.excluded_file_extensions.split("|") if args.excluded_file_extensions != "" else []
+included_file_extensions = (
+    args.included_file_extensions.split("|")
+    if args.included_file_extensions != ""
+    else []
+)
+excluded_file_extensions = (
+    args.excluded_file_extensions.split("|")
+    if args.excluded_file_extensions != ""
+    else []
+)
 include_tokens_in_output = parse_bool(args.include_tokens_in_output)
 
 if args.mode == "files":
