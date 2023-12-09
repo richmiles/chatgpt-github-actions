@@ -163,7 +163,7 @@ def get_code_review_from_openai(content: str, include_tokens_in_output: bool) ->
         )
         if(include_tokens_in_output):
             completion_text += f"\n\nCompletion Tokens: {response.usage.completion_tokens}" if response.usage else ""
-            completion_text += f"\Prompt Tokens: {response.usage.prompt_tokens}" if response.usage else ""
+            completion_text += f"\nPrompt Tokens: {response.usage.prompt_tokens}" if response.usage else ""
             
         return completion_text
     except Exception as e:
